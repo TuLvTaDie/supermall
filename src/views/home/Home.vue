@@ -21,7 +21,7 @@
       <goods-list :goods="showGoods"/>
     </scroll>
 
-    <back-top @click.native="backClick" v-show=isShowBackTop></back-top>
+    <back-top @click.native="backClick" v-show=isShowBackTop />
   </div>
 </template>
 
@@ -34,10 +34,11 @@
   import TabControl from 'components/content/tabControl/TabControl'
   import GoodsList from 'components/content/goods/GoodsList'
   import Scroll from 'components/common/scroll/Scroll'
-  import BackTop from 'components/content/backTop/BackTop'
+
 
   import {getHomeMultidata, getHomeGoods} from "network/home";// 网络请求
   import {debounce} from "common/utils"
+  import {itemListenerMixin, backTopMixin} from "common/mixin";
 
   export default {
     name: "Home",
@@ -49,8 +50,8 @@
       TabControl,
       GoodsList,
       Scroll,
-      BackTop
     },
+    mixins: [itemListenerMixin, backTopMixin],
     data() {
       return {
         banners: [],
@@ -77,9 +78,11 @@
     // activated() {
     //   this.$refs.scroll.scrollTo(0, this.saveY, 0)
     // },
-    // deactivated() {
-    //   this.saveY = this.$refs.scroll.scroll.y
-    // },
+    deactivated() {
+      this.saveY = this.$refs.scroll.scroll.y
+
+      this.$bus.$off('itemImageLoad', this.itemImgListener)
+    },
     created() {
       // 1.请求多个数据
       this.getHomeMultidata()
@@ -91,11 +94,6 @@
 
     },
     mounted() {
-      // 1.图片加载完成的事件监听
-      const refresh = debounce(this.$refs.scroll.refresh, 50)
-      this.$bus.$on('itemImageLoad', () => {
-        refresh()
-      })
     },
     methods: {
       /*
@@ -116,12 +114,9 @@
         this.$refs.tabControl1.currentIndex = index;
         this.$refs.tabControl2.currentIndex = index;
       },
-      backClick() {
-        this.$refs.scroll.scrollTo(0, 0)
-      },
       contentScroll(position) {
         // 1.判断BackTop是否显示
-        this.isShowBackTop = -position.y > 1000
+        this.listenShowBackTop(position)
 
         // 2.判断tabControl是否吸顶(position: fixed)
         this.isTabFixed = (-position.y) > this.tabOffsetTop
@@ -158,8 +153,7 @@
 <style scoped>
   #home {
     /*padding-top: 44px;*/
-    height: 100vh;
-    position: relative;
+
   }
 
   .home-nav {

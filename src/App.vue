@@ -3,7 +3,8 @@
     <keep-alive exclude="Detail">
       <router-view/>
     </keep-alive>
-    <main-tab-bar/>
+    <!--详情界面不用展示-->
+    <main-tab-bar v-if="!/^\/detail/.test($route.path)"/>
   </div>
 </template>
 
